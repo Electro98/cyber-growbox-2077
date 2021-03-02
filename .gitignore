@@ -2,5 +2,5 @@
 
 .clang-format
 
-# For test sketch
-.pio
+# For tests sketch
+*/.pio
