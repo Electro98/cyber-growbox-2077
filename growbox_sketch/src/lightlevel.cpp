@@ -8,14 +8,14 @@ void setup() {
   lightMeter.begin();
 }
 
-void getLux(){
+int getLux(){
   uint16_t lux = lightMeter.readLightLevel();
-  Serial.print("РЎС‚РµРїРµРЅСЊ РѕСЃРІРµС‰РµРЅРЅРѕСЃС‚Рё: ");
-  Serial.print(lux);
-  Serial.println(" Р»СЋРєСЃРѕРІ");
-  delay(500);
+  return lux;
 }
 
 void loop() {
-  getLux();
+  Serial.print("Степень освещенности: ");
+  Serial.print(getLux());
+  Serial.println(" люксов");
+  delay(500);
 }
