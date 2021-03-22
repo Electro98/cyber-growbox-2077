@@ -6,5 +6,6 @@
 void setupSensors();
 float getTempurature();
 void setResolutionDS18(int resolution);
+uint16_t getLux();
 
 #endif
