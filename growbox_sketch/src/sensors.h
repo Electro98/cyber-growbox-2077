@@ -2,6 +2,8 @@
 #define SENSORS_H
 
 #include <setup.h>
+#include <BH1750.h>
+#include <Wire.h>
 
 void setupSensors();
 float getTempurature();
