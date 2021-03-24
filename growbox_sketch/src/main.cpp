@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <GyverStepper.h>
 
+#define TRASLATE_STEPS_TO_MM
+#define STEPS_PER_FULL_ROTATION 200
 #define MM_IN_FULL_ROTATION 8
 
 // Steps per full rotation - 200, Step - 7 pin, Dir - 6 pin
