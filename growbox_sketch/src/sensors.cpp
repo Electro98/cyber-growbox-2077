@@ -27,7 +27,7 @@ void setResolutionDS18(int resolution){
 
 
 float getTdsParametrs(){
-    int valueSensor = analogRead(PINSENSOR);
+    int valueSensor = analogRead(TDS_PIN);
     float voltageSensor = valueSensor * 5 / 1024.0;
     float tdsSensor = (133.42 * pow(voltageSensor, 3) - 255.86 * pow(voltageSensor, 2) + 857.39 * voltageSensor) * 0.5;
     return tdsSensor; 
