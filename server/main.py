@@ -1,4 +1,5 @@
 import sys
+import sqlite3
 import requests
 from flask import Flask, request, render_template
 from flask.json import jsonify
@@ -16,16 +17,28 @@ class SensorsAPI(MethodView):
     def get(self):
         # тестовая вьюха для имитации отправки данных с датчиков 
         state = {
-            'temperature': 25.5,
-            'humidity': 60.8,
-            'pressure': 238,
-            'gas_resistance': 505.5965,
+            'date': '2021-04-07',
+            'time': '21:23',
+            'light_1': 238,
+            'co2': 404,
         }
         return jsonify(state)
 
     def post(self):
+        # Столбцы таблицы
+        # date time light_1 temp_water tds co2
         data = request.form
         print(data, file=sys.stderr)
+        # По идеи тут должен быть вызов функции, 
+        #   которая асинхронно записывает данные в БД
+        #
+        # Но пока идёт тест...
+        # Ахтунг
+        conn = sqlite3.connect("sensors_data.db")
+        curs = conn.cursor()
+        curs.execute(f"INSERT INTO sensors (date, time) VALUES (\'{data['date']}\', \'{data['time']}\')")
+        conn.commit()
+        conn.close()
         # return 'OK'
         return render_template('data.html', data=data)
 
@@ -37,10 +50,10 @@ app.add_url_rule('/data', view_func=SensorsAPI.as_view('counter'))
 def send_state():
     # тестовая вьюха для имитации отправки данных с датчиков 
     state = {
-        'temperature': 25.5,
-        'humidity': 60.8,
-        'pressure': 238,
-        'gas_resistance': 505.5965,
+        'date': '2021-04-07',
+        'time': '21-23',
+        'light_1': 238,
+        'co2': 404,
     }
     # ручками отправляем POST запрос на нужны url
     res = requests.post('http://localhost:5000/data', data=state)
