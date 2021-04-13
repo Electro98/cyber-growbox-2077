@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<script type="text/javascript">
+  var request;
+  var timerID=null;
+
+  function update() {
+	// функция для обновления данных о лампочке
+    request = new XMLHttpRequest();
+	request.open("GET", "http://localhost:5000/bulbs");
+	request.onreadystatechange = bulbs_update;
+	request.send();
+  }
+
+  function bulbs_update() {
+	if (request.readyState == 4) {
+	  var status = request.status;
+	  if (status == 200) {
+	  	var bulbs = request.responseText;
+	    document.getElementById("bulb0").setAttribute("fill", bulbs.charAt(0) == '1'? "yellow": "black");
+	    document.getElementById("bulb1").setAttribute("fill", bulbs.charAt(1) == '1'? "yellow": "black");
+	  }
+	}
+  }
+
+  function set_update(){
+  	timerID = setInterval(update, 500);
+  }
+
+  function send_platform() {
+    request = new XMLHttpRequest();
+	// строка с параметрами для отправки
+	var body = "command=" + document.getElementById("platform-type").value + "&arg=" + document.getElementById("platform").value;
+	request.open("GET", "http://localhost:5000/command?"+body);
+	request.onreadystatechange = reqReadyStateChange;
+	request.send();
+  }
+
+  function send_relay() {
+    request = new XMLHttpRequest();
+	// строка с параметрами для отправки
+	var body = "command=" + document.getElementById("relay-type").value + "&arg=" + document.getElementById("relay-num").value;
+	request.open("GET", "http://localhost:5000/command?"+body);
+	request.onreadystatechange = reqReadyStateChange;
+	request.send();
+  }
+
+  function reqReadyStateChange() {
+	if (request.readyState == 4) {
+	  var status = request.status;
+	  if (status == 200) {
+	    document.getElementById("result").innerHTML=request.responseText;
+	  }
+	}
+  }
+
+window.onload = set_update;
+</script>
+<head>
+	<meta charset="utf-8" />
+	<title>Cool</title>
+</head>
+<body>
+	<table border="1">
+		<tr>
+			<td>
+				<p>Cостояние ламп:</p>
+				<svg version="1.1"
+			     baseProfile="full"
+			     width="60" height="150"
+			     xmlns="http://www.w3.org/2000/svg">
+			     {% if data[0] %}
+				  	<circle id="bulb0" cx="30" cy="30" r="25" fill="yellow" />
+				 {% else %}
+				 	<circle id="bulb0" cx="30" cy="30" r="25" fill="black" />
+				 {% endif %}
+				 {% if data[1] %}
+				  	<circle id="bulb1" cx="30" cy="90" r="25" fill="yellow" />
+				 {% else %}
+				 	<circle id="bulb1" cx="30" cy="90" r="25" fill="black" />
+				 {% endif %}
+				</svg>
+			</td>
+			<td>
+				<select id="relay-num">
+				  <option value="0">Свет:</option>
+				  <option value="1">Насос:</option>
+				</select>
+				<select id="relay-type">
+				  <option value="A">Включить</option>
+				  <option value="D">Выключить</option>
+				</select>
+				<input type="button" value="Переключим" onclick="send_relay()"/>
+			</td>
+			<td>
+				<select id="platform-type">
+				  <option value="R">Поднять Платформу:</option>
+				  <option value="L">Опустить платформу:</option>
+				</select>
+				<input id="platform" type="number" size="2" name="arg" min="1" max="150" value="10">
+				<input type="button" value="Поехали" onclick="send_platform()"/>
+			</td>
+			<td>
+				<div id="result"></div>
+			</td>
+		</tr>
+	</table>
+</body>
+</html>

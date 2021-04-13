@@ -8,6 +8,17 @@ from flask.views import MethodView
 
 app = Flask(__name__)
 
+light_state = [0, 0]
+commands_stack = []
+
+
+# Костыль для того, чтобы никто не ругался,
+#    что javascript нельзя ответы на запросы получать
+@app.after_request
+def add_cors_headers(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
 
 class SensorsAPI(MethodView):
     # Про MethodView:
@@ -46,28 +57,61 @@ class SensorsAPI(MethodView):
 app.add_url_rule('/data', view_func=SensorsAPI.as_view('counter'))
 
 
-@app.route('/send')
-def send_state():
-    # тестовая вьюха для имитации отправки данных с датчиков 
-    state = {
-        'date': '2021-04-07',
-        'time': '21-23',
-        'light_1': 238,
-        'co2': 404,
-    }
-    # ручками отправляем POST запрос на нужны url
-    res = requests.post('http://localhost:5000/data', data=state)
-    # сами возвращаем html где уже отрендерен шаблон в качестве ответа 
-    return (res.text, res.status_code, res.headers.items())
+@app.route('/command')
+def add_command():
+    args = request.args.to_dict()
+    print(args)
+    if 'command' not in args.keys() and 'arg' not in args.keys():
+        return 'Failed.'
+    if request.args['command'] in ('A', 'D'):
+        light_state[int(args['arg'])] = int(args['command'] == 'A')
+    else:
+        commands_stack.append(args['command'] + args['arg'])
+    return 'Success!'
+
+
+@app.route('/get_command')
+def get_command():
+    commands = [f'A{num}' if bulb else f'D{num}' for num, bulb in enumerate(light_state)]
+    commands.extend(commands_stack)
+    if request.args.to_dict().get('clear'):
+        commands_stack.clear()
+    return ''.join(commands)
+
+
+@app.route('/bulbs')
+def bulbs():
+    return str(light_state[0])+str(light_state[1])
+
+
+@app.route('/view')
+def show_state():
+    # тестовая вьюха для обзора последних данных с датчиков
+    conn = sqlite3.connect("sensors_data.db")
+    curs = conn.cursor()
+    curs.execute("SELECT * FROM sensors WHERE ROWID = (SELECT MAX(ROWID) FROM sensors)")
+    data = curs.fetchall()[0]
+    conn.commit()
+    conn.close()
+    # Столбцы таблицы
+    # date time light_1 temp_water tds co2
+    headers = ('Дата: ', 'Время: ',
+               'Данные о свете: ',
+               'Температура раствора',
+               'Концентрация солей:',
+               'Концентрация углекислоты',)
+    # сами возвращаем html где уже отрендерен шаблон в качестве ответа
+    data = {headers[_id]: elem for _id, elem in enumerate(data)}
+    return render_template('data.html', data=data)
 
 
 @app.route('/')
 def hello_world():
     # Почему бы и нет
-    return 'Hello, World!'
+    return render_template('UI.html', data=light_state)
 
 
 if __name__ == '__main__':
     # или через консоль:
     # python -m flask run
-    app.run(debug = True)
+    app.run(debug=True)
