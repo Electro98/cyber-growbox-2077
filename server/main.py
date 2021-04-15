@@ -38,7 +38,8 @@ class SensorsAPI(MethodView):
     def post(self):
         # Столбцы таблицы
         # date time light_1 temp_water tds co2
-        data = request.form
+        print(request)
+        data = request.json
         print(data, file=sys.stderr)
         # По идеи тут должен быть вызов функции, 
         #   которая асинхронно записывает данные в БД
@@ -72,7 +73,7 @@ def add_command():
 
 @app.route('/get_command')
 def get_command():
-    commands = [f'A{num}' if bulb else f'D{num}' for num, bulb in enumerate(light_state)]
+    commands = [f'A{num+1}' if bulb else f'D{num+1}' for num, bulb in enumerate(light_state)]
     commands.extend(commands_stack)
     if request.args.to_dict().get('clear'):
         commands_stack.clear()
@@ -114,4 +115,5 @@ def hello_world():
 if __name__ == '__main__':
     # или через консоль:
     # python -m flask run
-    app.run(debug=True)
+    #app.run(debug=True)
+    app.run(host='0.0.0.0')

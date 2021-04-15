@@ -7,7 +7,7 @@
   function update() {
 	// функция для обновления данных о лампочке
     request = new XMLHttpRequest();
-	request.open("GET", "http://localhost:5000/bulbs");
+	request.open("GET", "http://192.168.43.49:5000/bulbs");
 	request.onreadystatechange = bulbs_update;
 	request.send();
   }
@@ -31,7 +31,7 @@
     request = new XMLHttpRequest();
 	// строка с параметрами для отправки
 	var body = "command=" + document.getElementById("platform-type").value + "&arg=" + document.getElementById("platform").value;
-	request.open("GET", "http://localhost:5000/command?"+body);
+	request.open("GET", "http://192.168.43.49:5000/command?"+body);
 	request.onreadystatechange = reqReadyStateChange;
 	request.send();
   }
@@ -40,7 +40,7 @@
     request = new XMLHttpRequest();
 	// строка с параметрами для отправки
 	var body = "command=" + document.getElementById("relay-type").value + "&arg=" + document.getElementById("relay-num").value;
-	request.open("GET", "http://localhost:5000/command?"+body);
+	request.open("GET", "http://192.168.43.49:5000/command?"+body);
 	request.onreadystatechange = reqReadyStateChange;
 	request.send();
   }
