@@ -12,6 +12,18 @@ light_state = [0, 0]
 commands_stack = []
 
 
+def work_with_base(function):
+    """Декоратор для упрощения работы с базой."""
+    def modificied_function(*args, **kwargs):
+        conn = sqlite3.connect("sensors_data.db")
+        curs = conn.cursor()
+        result = function(*args, curs=curs, **kwargs)
+        conn.commit()
+        conn.close()
+        return result
+    return modificied_function
+
+
 # Костыль для того, чтобы никто не ругался,
 #    что javascript нельзя ответы на запросы получать
 @app.after_request
@@ -26,7 +38,7 @@ class SensorsAPI(MethodView):
     # Быстрый старт:
     # https://flask.palletsprojects.com/en/1.1.x/quickstart/
     def get(self):
-        # тестовая вьюха для имитации отправки данных с датчиков 
+        # тестовая вьюха для имитации отправки данных с датчиков
         state = {
             'date': '2021-04-07',
             'time': '21:23',
@@ -35,22 +47,19 @@ class SensorsAPI(MethodView):
         }
         return jsonify(state)
 
-    def post(self):
+    @work_with_base
+    def post(self, *, curs):
         # Столбцы таблицы
         # date time light_1 temp_water tds co2
         print(request)
         data = request.json
         print(data, file=sys.stderr)
-        # По идеи тут должен быть вызов функции, 
+        # По идеи тут должен быть вызов функции,
         #   которая асинхронно записывает данные в БД
         #
         # Но пока идёт тест...
         # Ахтунг
-        conn = sqlite3.connect("sensors_data.db")
-        curs = conn.cursor()
         curs.execute(f"INSERT INTO sensors (date, time) VALUES (\'{data['date']}\', \'{data['time']}\')")
-        conn.commit()
-        conn.close()
         # return 'OK'
         return render_template('data.html', data=data)
 
@@ -82,18 +91,15 @@ def get_command():
 
 @app.route('/bulbs')
 def bulbs():
-    return str(light_state[0])+str(light_state[1])
+    return str(light_state[0]) + str(light_state[1])
 
 
 @app.route('/view')
-def show_state():
+@work_with_base
+def show_state(*, curs):
     # тестовая вьюха для обзора последних данных с датчиков
-    conn = sqlite3.connect("sensors_data.db")
-    curs = conn.cursor()
     curs.execute("SELECT * FROM sensors WHERE ROWID = (SELECT MAX(ROWID) FROM sensors)")
     data = curs.fetchall()[0]
-    conn.commit()
-    conn.close()
     # Столбцы таблицы
     # date time light_1 temp_water tds co2
     headers = ('Дата: ', 'Время: ',
@@ -101,19 +107,18 @@ def show_state():
                'Температура раствора',
                'Концентрация солей:',
                'Концентрация углекислоты',)
-    # сами возвращаем html где уже отрендерен шаблон в качестве ответа
+
     data = {headers[_id]: elem for _id, elem in enumerate(data)}
     return render_template('data.html', data=data)
 
 
 @app.route('/')
 def hello_world():
-    # Почему бы и нет
     return render_template('UI.html', data=light_state)
 
 
 if __name__ == '__main__':
     # или через консоль:
     # python -m flask run
-    #app.run(debug=True)
+    # app.run(debug=True)
     app.run(host='0.0.0.0')

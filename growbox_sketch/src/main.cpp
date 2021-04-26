@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <GyverStepper.h>
+#include <DS3231.h>
 
 #define TRASLATE_STEPS_TO_MM
 #define STEPS_PER_FULL_ROTATION 200
@@ -8,11 +9,20 @@
 // Steps per full rotation - 200, Step - 7 pin, Dir - 6 pin
 GStepper<STEPPER2WIRE> stepper(STEPS_PER_FULL_ROTATION, 7, 6);
 
+DS3231  rtc(SDA, SCL);
+Time  t;
+
 // Relays pins array
-const byte ARRAY_RELAYS[] = {3};
+const byte ARRAY_RELAYS[] = {3, 4};
+
+uint32_t day_timer = 0;
+uint32_t pump_timer = 0;
+uint8_t last_pump_hour = 0;
 
 int32_t controlMotor();
 void getSmartCommand();
+void control_daytime();
+void control_pump();
 
 void setup() {
   // Initialization of pins to work with relays
@@ -28,10 +38,42 @@ void setup() {
   stepper.setAcceleration(300);
   // отключать мотор при достижении цели
   stepper.autoPower(true);
+
+  // to work with day_timer
+  day_timer = millis() + 2000;
+  pump_timer = millis() + 2000;
+  rtc.begin();
 }
 
 void loop() {
   getSmartCommand();
+  control_daytime();
+  control_pump();
+}
+
+void control_daytime(){
+  if (day_timer <= millis()){
+    day_timer = millis() + 2000;
+    t = rtc.getTime();
+
+    if (((t.hour >= 0 && t.hour < 14) || (t.hour > 21) )&& !digitalRead(ARRAY_RELAYS[0]))
+      digitalWrite(ARRAY_RELAYS[0], 1);
+    else if ((t.hour == 14) && digitalRead(ARRAY_RELAYS[0]))
+      digitalWrite(ARRAY_RELAYS[0], 0);
+  }
+}
+
+void control_pump(){
+  if (pump_timer <= millis()){
+    pump_timer = millis() + 120000;
+    t = rtc.getTime();
+
+    if (t.hour != last_pump_hour){
+      digitalWrite(ARRAY_RELAYS[1], 1);
+      last_pump_hour = t.hour;
+    } else
+      digitalWrite(ARRAY_RELAYS[1], 0);
+  }
 }
 
 int32_t controlMotor(int32_t distance) {
@@ -57,32 +99,43 @@ byte controlRelay(int8_t command) {
 
 void getSmartCommand() {
   if (!(stepper.tick()) && (Serial.available() > 1)) {
-    // Bad function, cause it use delay(1)
-    delay(1);
-    byte command = 0;
+    // Command example:
+    // 0x01 0x02 0x0f 0x12 0x00
     int32_t result = 0;
-    command = Serial.read();
-    byte buffer;
-    while (Serial.available() && (Serial.peek() != 'L') && (Serial.peek() != 'R') && (Serial.peek() != 'A') && (Serial.peek() != 'D')) {
-      buffer = Serial.read() - '0';
-      buffer = (buffer <= 9) && (buffer >= 0) ? buffer : 0;
-      result = result * 10 + buffer;
+    byte command = Serial.read();
+    byte argSize  = Serial.read();
+    
+    while (Serial.available() < argSize); // Waiting for data
+    
+    for (; argSize; argSize--)
+      result = result << 8 + Serial.read();
+
+    while (!Serial.available());
+    if (!Serial.read())
+      Serial.write(0xff);
+    else {
+      Serial.write(0x00);
+      return;
     }
-    Serial.println(result);
+    
     switch (command) {
-      case 'R':
-      case 'L':
-        result *= command == 'L' ? -1 : 1;
-        Serial.print("Turning motors on steps: ");
+      case 1:
+      case 2:
+        result *= command == 2 ? -1 : 1;
         result = controlMotor(result);
-        Serial.println(result);
         break;
-      case 'A':
-      case 'D':
-        result *= command == 'A' ? 1 : -1;
-        Serial.print("Rele number is: ");
-        Serial.println(controlRelay(result));
+      case 3:
+      case 4:
+        result *= command == 3 ? 1 : -1;
+        controlRelay(result);
         break;
+      case 5:
+        byte light_state = digitalRead(ARRAY_RELAYS[1]) << 1 + digitalRead(ARRAY_RELAYS[0]);
+        switch(result){
+          case 0:
+            Serial.write(light_state);
+            break;
+        }
     }
   }
 }

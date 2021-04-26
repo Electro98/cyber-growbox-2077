@@ -1,21 +1,29 @@
 #include <ESP8266WiFi.h>
-#include <ESP8266WiFiMulti.h>
 
 #include <ESP8266HTTPClient.h>
 
 #include <WiFiClient.h>
 
 #ifndef STASSID
-#define STASSID "GrowNet"
+#define STASSID "GrowNET"
 #define STAPSK  "thereisnospoon"
 #endif
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-ESP8266WiFiMulti WiFiMulti;
 
 const int led = 13;
+
+byte sendCommand(byte command, uint32_t comArg){
+  Serial.write(command);
+  Serial.write(0x04);
+  for (byte i = 3; i >= 0; i--)
+    Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
+  Serial.write(0x00);
+  while (!Serial.available());
+  return Serial.read();
+}
 
 void getCommand() {
   if (WiFi.status() == WL_CONNECTED){
@@ -32,7 +40,7 @@ void getCommand() {
         }
       }
       http.end();
-    } else
+    }
     //Serial.println("Failed.");
     
     digitalWrite(led, 0);
@@ -66,19 +74,18 @@ void setup(void) {
   pinMode(led, OUTPUT);
   digitalWrite(led, 0);
   Serial.begin(115200);
-  //Serial.println("Trying");
+  Serial.println("Trying");
   for (uint8_t t = 4; t > 0; t--) {
     //Serial.printf("[SETUP] WAIT %d...\n", t);
     Serial.flush();
     delay(1000);
   }
   WiFi.mode(WIFI_STA);
-  WiFiMulti.addAP(ssid, password);
+  WiFi.begin(ssid, password);
   
   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED)
     delay(500);
-  }
   /*Serial.println("");
   Serial.print("Connected to ");
   Serial.println(ssid);
