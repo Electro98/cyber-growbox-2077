@@ -1,7 +1,6 @@
+#include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
-
 #include <ESP8266HTTPClient.h>
-
 #include <WiFiClient.h>
 
 #ifndef STASSID
@@ -11,7 +10,6 @@
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
-
 
 const int led = 13;
 
@@ -35,8 +33,15 @@ void getCommand() {
       int httpCode = http.GET();
       if (httpCode > 0) {
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          String payload = http.getString();
-          Serial.print(payload);
+          DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2));
+          JsonObject& obj = jsonBuffer.parseObject(http.getString());
+          int light0 = obj["light"][0];
+          int light1 = obj["light"][1];
+          int motorsSteps = obj["motors"];
+          sendCommand(light0 > 0? 3: 4, 1);
+          sendCommand(light1 > 0? 3: 4, 2);
+          if (obj["motors"])
+            sendCommand(motorsSteps > 0? 1: 2, abs(motorsSteps));
         }
       }
       http.end();
