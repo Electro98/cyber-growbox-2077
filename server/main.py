@@ -8,8 +8,8 @@ from flask.views import MethodView
 
 app = Flask(__name__)
 
-light_state = [0, 0]
-commands_stack = []
+light_state = [{'name': lamp, 'val': 0} for lamp in ('Лампы', 'Насос')]
+motors_state = 0
 
 
 def work_with_base(function):
@@ -67,31 +67,31 @@ class SensorsAPI(MethodView):
 app.add_url_rule('/data', view_func=SensorsAPI.as_view('counter'))
 
 
-@app.route('/command')
-def add_command():
-    args = request.args.to_dict()
-    print(args)
-    if 'command' not in args.keys() and 'arg' not in args.keys():
+@app.route('/command', methods=['POST'])
+def add_commands():
+    data = request.json
+    print(data)
+    if 'command' not in data.keys() and 'arg' not in data.keys():
         return 'Failed.'
-    if request.args['command'] in ('A', 'D'):
-        light_state[int(args['arg'])] = int(args['command'] == 'A')
-    else:
-        commands_stack.append(args['command'] + args['arg'])
+    if data['command'] in ('A', 'D'):
+        light_state[int(data['arg'])]['val'] = int(data['command'] == 'A')
+    elif data['command'] in ('R', 'L'):
+        global motors_state  # Осуждаю, честно, дайте идей, как это поправить
+        motors_state += int(data['arg'])
     return 'Success!'
 
 
 @app.route('/get_command')
 def get_command():
-    commands = [f'A{num+1}' if bulb else f'D{num+1}' for num, bulb in enumerate(light_state)]
-    commands.extend(commands_stack)
-    if request.args.to_dict().get('clear'):
-        commands_stack.clear()
-    return ''.join(commands)
+    commands = {'light': [bulb['val'] for _, bulb in enumerate(light_state)]}
+    if motors_state:
+        commands['motors'] = motors_state
+    return jsonify(commands)
 
 
 @app.route('/bulbs')
-def bulbs():
-    return str(light_state[0]) + str(light_state[1])
+def bulbs_update():
+    return jsonify({f'bulb{num}': bulb['val'] for num, bulb in enumerate(light_state)})
 
 
 @app.route('/view')
@@ -113,12 +113,13 @@ def show_state(*, curs):
 
 
 @app.route('/')
-def hello_world():
-    return render_template('UI.html', data=light_state)
+@app.route('/index')
+def index():
+    return render_template('index.html', data=enumerate(light_state))
 
 
 if __name__ == '__main__':
     # или через консоль:
     # python -m flask run
-    # app.run(debug=True)
-    app.run(host='0.0.0.0')
+    app.run(debug=True)
+    # app.run(host='0.0.0.0')
