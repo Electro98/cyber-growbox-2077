@@ -11,7 +11,8 @@
     <body>
         <div>GrowNet: 
           <a href="{{ url_for('index') }}">Control Panel</a>
-          <a href="/view">Last data</a>
+          <a href="{{ url_for('show_last_state') }}">Last data</a>
+          <a href="{{ url_for('graph_example') }}">Plot</a>
         </div>
         <hr>
         {% block content %}{% endblock %}

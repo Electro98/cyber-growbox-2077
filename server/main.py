@@ -1,10 +1,15 @@
 import sys
 import sqlite3
 import requests
+import pandas
+import json
+
 from flask import Flask, request, render_template
 from flask.json import jsonify
 from flask.views import MethodView
-
+from plotly.utils import PlotlyJSONEncoder
+from plotly import graph_objs
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -14,6 +19,7 @@ motors_state = 0
 
 def work_with_base(function):
     """Декоратор для упрощения работы с базой."""
+    @wraps(function)
     def modificied_function(*args, **kwargs):
         conn = sqlite3.connect("sensors_data.db")
         curs = conn.cursor()
@@ -96,7 +102,7 @@ def bulbs_update():
 
 @app.route('/view')
 @work_with_base
-def show_state(*, curs):
+def show_last_state(*, curs):
     # тестовая вьюха для обзора последних данных с датчиков
     curs.execute("SELECT * FROM sensors WHERE ROWID = (SELECT MAX(ROWID) FROM sensors)")
     data = curs.fetchall()[0]
@@ -110,6 +116,23 @@ def show_state(*, curs):
 
     data = {headers[_id]: elem for _id, elem in enumerate(data)}
     return render_template('data.html', data=data)
+
+
+@app.route('/graph')
+@work_with_base
+def graph_example(*, curs):
+    data = curs.execute("SELECT * FROM sensors").fetchall()
+    df = pandas.DataFrame(data, columns=['date', 'time', 'light_1', 'temp_water', 'tds', 'co2'])
+    for column in ('time', 'light_1', 'temp_water', 'tds'):
+        del df[column]
+    graph = [
+        graph_objs.Scatter(
+            x=df['date'],
+            y=df['co2'],
+        )
+    ]
+    graphJSON = json.dumps(graph, cls=PlotlyJSONEncoder)
+    return render_template('graph.html', plot=graphJSON)
 
 
 @app.route('/')
