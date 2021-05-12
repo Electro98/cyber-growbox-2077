@@ -12,5 +12,6 @@ void setResolutionDS18(int resolution);
 float getTdsParametrs();
 uint16_t getLux();
 String airQualityIndex();
+uint8_t getPPM();
 
 #endif

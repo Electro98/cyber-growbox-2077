@@ -2,5 +2,8 @@
 
 .clang-format
 
+# python
+*__pycache__
+
 # For tests sketch
 */.pio
