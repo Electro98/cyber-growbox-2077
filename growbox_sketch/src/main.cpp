@@ -1,5 +1,9 @@
 #include <Arduino.h>
 #include <GyverStepper.h>
+#include <Time.h>
+#include <Wire.h>  
+#include <DS3231.h>
+#include <DS1307RTC.h>
 
 #define TRASLATE_STEPS_TO_MM
 #define STEPS_PER_FULL_ROTATION 200
@@ -13,6 +17,11 @@ const byte ARRAY_RELAYS[] = {3};
 
 int32_t controlMotor();
 void getSmartCommand();
+
+//time 
+uint64_t time_old;
+uint16_t time_interval;
+DS3231  rtc(SDA, SCL);
 
 void setup() {
   // Initialization of pins to work with relays
@@ -28,6 +37,9 @@ void setup() {
   stepper.setAcceleration(300);
   // отключать мотор при достижении цели
   stepper.autoPower(true);
+  //иницилизация времени
+  rtc.begin();
+  time_old = rtc.getUnixTime(rtc.getTime());
 }
 
 void loop() {
@@ -53,6 +65,18 @@ byte controlRelay(int8_t command) {
     return indexRelay++;
   }
   return 0;
+}
+
+float fun_time(uint16_t time_interval,uint64_t time_old){
+  float sensorArray[4] = {};  
+  if (user_const <= rtc.getUnixTime(rtc.getTime()) - time_old){
+      time_old = rtc.getUnixTime(rtc.getTime());
+      sensorArray[0] = (float) getLux();
+      sensorArray[1] = (float) getPPM();
+      sensorArray[2] = getTempurature();
+      sensorArray[3] = getTdsParametrs();
+  }
+  return sensorArray;
 }
 
 void getSmartCommand() {
