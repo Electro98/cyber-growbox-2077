@@ -4,6 +4,7 @@
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature sensors(&oneWire);
 DeviceAddress waterThermometer;
+Adafruit_BME680 bme(BME_CS, BME_MOSI, BME_MISO,  BME_SCK);
 
 void setupSensors(){
     sensors.begin();
@@ -25,10 +26,67 @@ float getTdsParametrs(){
     int valueSensor = analogRead(PINSENSOR);
     float voltageSensor = valueSensor * 5 / 1024.0;
     float tdsSensor = (133.42 * pow(voltageSensor, 3) - 255.86 * pow(voltageSensor, 2) + 857.39 * voltageSensor) * 0.5;
-    return tdsSensor; 
+    return tdsSensor;
 }
 
 uint16_t getLux(){
   uint16_t lux = lightMeter.readLightLevel();
   return lux;
+}
+
+String airQualityIndex(){
+  float gas_lower = 5000, gas_upper = 50000;
+  float gas_reference = 250000;
+  float humidity_reference = 40;
+  float humidity_score = 0;
+  float gas_score = 0;
+  float current_humidity = bme.readHumidity();
+
+  float getGasReference(){
+  int readings = 10;
+  for (int i = 1; i <= readings; i++){
+    gas_reference += bme.readGas();
+  }
+  gas_reference = gas_reference / readings;
+  return gas_reference;
+  }
+
+
+  if(current_humidity >= 38 && current_humidity <= 48){
+    humidity_score = 0.25*100;
+  }else{
+    if(current_humidity < 38){
+      humidity_score = 0.25 / humidity_reference * current_humidity * 100;
+    }else{
+      humidity_score = ((-0.25 / (100 - humidity_reference) * current_humidity) + 0.416666) * 100;
+    }
+  }
+
+  if(gas_reference > gas_upper){
+    gas_reference = gas_upper;
+  }
+  if(gas_reference < gas_lower){
+    gas_reference = gas_lower;
+  }
+  gas_score = (0.75/(gas_upper - gas_lower) * gas_reference - (gas_lower * (0.75 / (gas_upper - gas_lower)))) * 100;
+
+  float air_quality_score = humidity_score + gas_score;
+
+
+  String air_quality_text = "Air quality is ";
+  air_quality_score = (100 - air_quality_score) * 5;
+  if(air_quality_score >= 301){
+    air_quality_text += "Hazardous";
+  }else if(air_quality_score >= 201 && air_quality_score <= 300){
+    air_quality_text += "Very Unhealthy";
+  }else if(air_quality_score >= 176 && air_quality_score <= 200){
+    air_quality_text += "Unhealthy";
+  }else if(air_quality_score >= 151 && air_quality_score <= 175){
+    air_quality_text += "Unhealthy for Sensitive Groups";
+  }else if(air_quality_score >= 51 && air_quality_score <= 150){
+    air_quality_text += "Moderate";
+  }else if(air_quality_score >= 0 && air_quality_score <= 50){
+    air_quality_text += "Good";
+  }
+  return air_quality_text;
 }
