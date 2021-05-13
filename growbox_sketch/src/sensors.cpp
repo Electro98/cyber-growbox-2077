@@ -34,7 +34,7 @@ uint16_t getLux(){
   return lux;
 }
 
-String airQualityIndex(){
+float airQualityIndex(){
   float gas_lower = 5000, gas_upper = 50000;
   float gas_reference = 250000;
   float humidity_reference = 40;
@@ -72,21 +72,36 @@ String airQualityIndex(){
 
   float air_quality_score = humidity_score + gas_score;
 
-
-  String air_quality_text = "Air quality is ";
   air_quality_score = (100 - air_quality_score) * 5;
-  if(air_quality_score >= 301){
-    air_quality_text += "Hazardous";
-  }else if(air_quality_score >= 201 && air_quality_score <= 300){
-    air_quality_text += "Very Unhealthy";
-  }else if(air_quality_score >= 176 && air_quality_score <= 200){
-    air_quality_text += "Unhealthy";
-  }else if(air_quality_score >= 151 && air_quality_score <= 175){
-    air_quality_text += "Unhealthy for Sensitive Groups";
-  }else if(air_quality_score >= 51 && air_quality_score <= 150){
-    air_quality_text += "Moderate";
-  }else if(air_quality_score >= 0 && air_quality_score <= 50){
-    air_quality_text += "Good";
+
+  return air_quality_score;
+}
+
+void setupBME680() {
+  Serial.begin(9600);
+  while (!Serial);
+  Serial.println(F("BME680 test"));
+
+  if (!bme.begin()) {
+    Serial.println("Could not find a valid BME680 sensor, check wiring!");
+    while (1);
   }
-  return air_quality_text;
+
+  bme.setTemperatureOversampling(BME680_OS_8X);
+  bme.setHumidityOversampling(BME680_OS_2X);
+  bme.setPressureOversampling(BME680_OS_4X);
+  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme.setGasHeater(320, 150);
+}
+
+float airTemperature(){
+  return bme.temperature;
+}
+
+float airPressure(){
+  return bme.pressure  * 0.0075;
+}
+
+float airHumidity(){
+  return bme.humidity;
 }

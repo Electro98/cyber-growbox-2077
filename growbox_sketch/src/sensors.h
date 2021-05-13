@@ -11,6 +11,10 @@ float getTempurature();
 void setResolutionDS18(int resolution);
 float getTdsParametrs();
 uint16_t getLux();
-String airQualityIndex();
+float airQualityIndex();
+float airTemperature();
+float airPressure();
+float airHumidity();
+void setupBME680();
 
 #endif
