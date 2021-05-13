@@ -78,15 +78,6 @@ float airQualityIndex(){
 }
 
 void setupBME680() {
-  Serial.begin(9600);
-  while (!Serial);
-  Serial.println(F("BME680 test"));
-
-  if (!bme.begin()) {
-    Serial.println("Could not find a valid BME680 sensor, check wiring!");
-    while (1);
-  }
-
   bme.setTemperatureOversampling(BME680_OS_8X);
   bme.setHumidityOversampling(BME680_OS_2X);
   bme.setPressureOversampling(BME680_OS_4X);
