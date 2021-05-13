@@ -1,4 +1,0 @@
-requests  # для отправки POST запросов
-flask
-
-pylint    # venv
