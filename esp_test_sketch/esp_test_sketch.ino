@@ -13,10 +13,13 @@ const char* password = STAPSK;
 
 const int led = 13;
 
-byte sendCommand(byte command, uint32_t comArg){
+const uint32_t capacity = JSON_OBJECT_SIZE(5) + JSON_ARRAY_SIZE(2)+20;
+StaticJsonDocument<capacity> comDoc;
+
+byte sendCommandA(byte command, uint32_t comArg){
   Serial.write(command);
   Serial.write(0x04);
-  for (byte i = 3; i >= 0; i--)
+  for (int8_t i = 3; i >= 0; i--)
     Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
   Serial.write(0x00);
   while (!Serial.available());
@@ -29,19 +32,21 @@ void getCommand() {
     digitalWrite(led, 1);
     WiFiClient client;
     HTTPClient http;
-    if (http.begin(client, "http://192.168.43.49:5000/get_command?clear=0")) {
+    if (http.begin(client, "http://192.168.43.49:5000/get_command")) {
       int httpCode = http.GET();
       if (httpCode > 0) {
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          DynamicJsonBuffer jsonBuffer(JSON_OBJECT_SIZE(3) + JSON_ARRAY_SIZE(2));
-          JsonObject& obj = jsonBuffer.parseObject(http.getString());
-          int light0 = obj["light"][0];
-          int light1 = obj["light"][1];
-          int motorsSteps = obj["motors"];
-          sendCommand(light0 > 0? 3: 4, 1);
-          sendCommand(light1 > 0? 3: 4, 2);
-          if (obj["motors"])
-            sendCommand(motorsSteps > 0? 1: 2, abs(motorsSteps));
+          deserializeJson(comDoc, http.getString());
+          int light0 = comDoc["light"][0];
+          int light1 = comDoc["light"][1];
+          Serial.println(light0);
+          Serial.println(light1);
+          sendCommandA(light0 > 0? 3: 4, 1);
+          sendCommandA(light1 > 0? 3: 4, 2);
+          if (comDoc.containsKey("motors")) {
+            int motorsSteps = comDoc["motors"];
+            sendCommandA(motorsSteps > 0? 1: 2, abs(motorsSteps));
+          }
         }
       }
       http.end();

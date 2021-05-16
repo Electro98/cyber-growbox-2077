@@ -90,8 +90,10 @@ def add_commands():
 @app.route('/get_command')
 def get_command():
     commands = {'light': [bulb['val'] for _, bulb in enumerate(light_state)]}
+    global motors_state
     if motors_state:
         commands['motors'] = motors_state
+    motors_state = 0
     return jsonify(commands)
 
 
