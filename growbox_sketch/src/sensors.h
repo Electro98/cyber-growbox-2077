@@ -4,6 +4,9 @@
 #include <setup.h>
 #include <BH1750.h>
 #include <Wire.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <SoftwareSerial.h>
 
 void setupSensors();
 float getTempurature();

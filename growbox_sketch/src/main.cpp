@@ -17,10 +17,13 @@ unit16_t time_interval = 60;
 // Relays pins array
 const byte ARRAY_RELAYS[] = {3, 4};
 
+uint8_t manual_control = 0;
+
 uint32_t day_timer = 0;
 uint32_t pump_timer = 0;
 uint8_t last_pump_hour = 0;
 
+void sendCommandE(byte command, uint32_t comArg);
 int32_t controlMotor();
 void getSmartCommand();
 void control_daytime();
@@ -68,7 +71,7 @@ void loop() {
 }
 
 void control_daytime(){
-  if (day_timer <= millis()){
+  if (!manual_control && day_timer <= millis()){
     day_timer = millis() + 2000;
     t = rtc.getTime();
 
@@ -80,7 +83,7 @@ void control_daytime(){
 }
 
 void control_pump(){
-  if (pump_timer <= millis()){
+  if (!manual_control && pump_timer <= millis()){
     pump_timer = millis() + 120000;
     t = rtc.getTime();
 
@@ -127,12 +130,8 @@ void getSmartCommand() {
       result = result << 8 + Serial.read();
 
     while (!Serial.available());
-    if (!Serial.read())
-      Serial.write(0xff);
-    else {
-      Serial.write(0x00);
+    if (Serial.read()) // Checking end of command
       return;
-    }
     
     switch (command) {
       case 1:
@@ -146,12 +145,16 @@ void getSmartCommand() {
         controlRelay(result);
         break;
       case 5:
-        byte light_state = digitalRead(ARRAY_RELAYS[1]) << 1 + digitalRead(ARRAY_RELAYS[0]);
-        switch(result){
-          case 0:
-            Serial.write(light_state);
-            break;
-        }
+        manual_control = result;
+        break;
     }
   }
+}
+
+void sendCommandE(byte command, float comArg){
+  Serial.write(command);
+  Serial.write(0x04);
+  for (int8_t i = 3; i >= 0; i--)
+    Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
+  Serial.write(0x00);
 }

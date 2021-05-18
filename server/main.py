@@ -13,7 +13,7 @@ from functools import wraps
 
 app = Flask(__name__)
 
-light_state = [{'name': lamp, 'val': 0} for lamp in ('Лампы', 'Насос')]
+light_state = [{'name': lamp, 'val': 0} for lamp in ('Управление', 'Лампы', 'Насос')]
 motors_state = 0
 
 
@@ -89,9 +89,12 @@ def add_commands():
 
 @app.route('/get_command')
 def get_command():
-    commands = {'light': [bulb['val'] for _, bulb in enumerate(light_state)]}
+    commands = {'light': [bulb['val'] for _, bulb in enumerate(light_state[1:])]}
+    commands['control'] = light_state[0]['val']
+    global motors_state
     if motors_state:
         commands['motors'] = motors_state
+    motors_state = 0
     return jsonify(commands)
 
 
