@@ -11,6 +11,8 @@ GStepper<STEPPER2WIRE> stepper(STEPS_PER_FULL_ROTATION, 7, 6);
 
 DS3231  rtc(SDA, SCL);
 Time  t;
+unit64_t time_old;
+unit16_t time_interval = 60;
 
 // Relays pins array
 const byte ARRAY_RELAYS[] = {3, 4};
@@ -26,6 +28,7 @@ int32_t controlMotor();
 void getSmartCommand();
 void control_daytime();
 void control_pump();
+float survey_of_sensors();
 
 void setup() {
   // Initialization of pins to work with relays
@@ -46,12 +49,29 @@ void setup() {
   day_timer = millis() + 2000;
   pump_timer = millis() + 2000;
   rtc.begin();
+  time_old = rtc.getUnixTime(rtc.getTime());
+}
+
+void survey_of_sensors(unit16_t time_interval, unit64_t time_old){ 
+  float dataSens = 0;
+  if (time_interval <= (rtc.getUnixTime(rtc.getTime()) - time_old)){
+      time_old = rtc.getUnixTime(rtc.getTime());
+      dataSens = (float) getLux();
+      sendData( 0x01, dataSens);
+      dataSens = (float) getPPM();
+      sendData( 0x02, dataSens);
+      dataSens = getTempurature();
+      sendData( 0x03, dataSens);
+      dataSens = getTdsParametrs();
+      sendData( 0x04, dataSens);
+  }
 }
 
 void loop() {
   getSmartCommand();
   control_daytime();
   control_pump();
+  survey_of_sensors();
 }
 
 void control_daytime(){
@@ -135,8 +155,8 @@ void getSmartCommand() {
   }
 }
 
-void sendCommandE(byte command, float comArg){
-  Serial.write(command);
+void sendData(byte dataNum, float comArg){
+  Serial.write(dataNum);
   Serial.write(0x04);
   for (int8_t i = 3; i >= 0; i--)
     Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
