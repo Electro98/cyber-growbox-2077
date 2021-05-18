@@ -5,6 +5,9 @@
 #include <BH1750.h>
 #include <Wire.h>
 #include "Adafruit_BME680.h"
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <SoftwareSerial.h>
 
 void setupSensors();
 float getTempurature();

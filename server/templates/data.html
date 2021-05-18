@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+	<h1>Последняя запись в базе:</h1>
+	{% if data %}
+	  <!-- <h2>Данных {{data}}</h2> -->
+	  {% for key, value in data.items() %}
+	  <h2>{{key}} - {{value}}</h2>
+	  {% endfor %}
+	{% else %}
+	  <h2>Данных нет</h2>
+	{% endif %}
+{% endblock %}

@@ -1,0 +1,20 @@
+<html>
+    {% block script %}{% endblock %}
+    <head>
+      <meta charset="utf-8" />
+      {% if title %}
+      <title>{{ title }} - GrowNET</title>
+      {% else %}
+      <title>GrowNET is greating you!</title>
+      {% endif %}
+    </head>
+    <body>
+        <div>GrowNet: 
+          <a href="{{ url_for('index') }}">Control Panel</a>
+          <a href="{{ url_for('show_last_state') }}">Last data</a>
+          <a href="{{ url_for('graph_example') }}">Plot</a>
+        </div>
+        <hr>
+        {% block content %}{% endblock %}
+    </body>
+</html>

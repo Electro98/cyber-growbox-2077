@@ -1,0 +1,6 @@
+requests  # для отправки POST запросов
+flask
+plotly
+pandas  # для обработки данных
+
+pylint    # venv

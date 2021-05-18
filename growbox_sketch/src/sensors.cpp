@@ -1,15 +1,20 @@
-#include <OneWire.h>
-#include <DallasTemperature.h>
+#include "sensors.h"
 
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature sensors(&oneWire);
 DeviceAddress waterThermometer;
 Adafruit_BME680 bme(BME_CS, BME_MOSI, BME_MISO,  BME_SCK);
+BH1750 lightMeter;
+
+SoftwareSerial CO2Serial(CO2_TX, CO2_RX);
+const byte cmd[9] PROGMEM= {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};  // Basic command for CO2 sensor
 
 void setupSensors(){
     sensors.begin();
     sensors.getAddress(waterThermometer, 0);     // For easier
     sensors.setResolution(waterThermometer, 12); // Default resolution
+    lightMeter.begin();
+    CO2Serial.begin(9600);
 }
 
 float getTempurature(){
