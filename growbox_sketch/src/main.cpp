@@ -52,22 +52,26 @@ void setup() {
   time_old = rtc.getUnixTime(rtc.getTime());
 }
 
-float survey_of_sensors(unit16_t time_interval, unit64_t time_old){
-  float sensorArray[4] = {};  
+void survey_of_sensors(unit16_t time_interval, unit64_t time_old){ 
+  float dataSens = 0;
   if (time_interval <= (rtc.getUnixTime(rtc.getTime()) - time_old)){
       time_old = rtc.getUnixTime(rtc.getTime());
-      sensorArray[0] = (float) getLux();
-      sensorArray[1] = (float) getPPM();
-      sensorArray[2] = getTempurature();
-      sensorArray[3] = getTdsParametrs();
+      dataSens = (float) getLux();
+      sendData( 0x01, dataSens);
+      dataSens = (float) getPPM();
+      sendData( 0x02, dataSens);
+      dataSens = getTempurature();
+      sendData( 0x03, dataSens);
+      dataSens = getTdsParametrs();
+      sendData( 0x04, dataSens);
   }
-  return sensorArray;
 }
 
 void loop() {
   getSmartCommand();
   control_daytime();
   control_pump();
+  survey_of_sensors();
 }
 
 void control_daytime(){
@@ -151,8 +155,8 @@ void getSmartCommand() {
   }
 }
 
-void sendCommandE(byte command, float comArg){
-  Serial.write(command);
+void sendData(byte dataNum, float comArg){
+  Serial.write(dataNum);
   Serial.write(0x04);
   for (int8_t i = 3; i >= 0; i--)
     Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
