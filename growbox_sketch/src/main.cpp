@@ -11,6 +11,8 @@ GStepper<STEPPER2WIRE> stepper(STEPS_PER_FULL_ROTATION, 7, 6);
 
 DS3231  rtc(SDA, SCL);
 Time  t;
+unit64_t time_old;
+unit16_t time_interval = 60;
 
 // Relays pins array
 const byte ARRAY_RELAYS[] = {3, 4};
@@ -23,6 +25,7 @@ int32_t controlMotor();
 void getSmartCommand();
 void control_daytime();
 void control_pump();
+float survey_of_sensors();
 
 void setup() {
   // Initialization of pins to work with relays
@@ -43,6 +46,19 @@ void setup() {
   day_timer = millis() + 2000;
   pump_timer = millis() + 2000;
   rtc.begin();
+  time_old = rtc.getUnixTime(rtc.getTime());
+}
+
+float survey_of_sensors(unit16_t time_interval, unit64_t time_old){
+  float sensorArray[4] = {};  
+  if (time_interval <= (rtc.getUnixTime(rtc.getTime()) - time_old)){
+      time_old = rtc.getUnixTime(rtc.getTime());
+      sensorArray[0] = (float) getLux();
+      sensorArray[1] = (float) getPPM();
+      sensorArray[2] = getTempurature();
+      sensorArray[3] = getTdsParametrs();
+  }
+  return sensorArray;
 }
 
 void loop() {
