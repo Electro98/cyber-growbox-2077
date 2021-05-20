@@ -121,21 +121,13 @@ byte controlRelay(int8_t command) {
 }
 
 void getSmartCommand() {
-  if (!(stepper.tick()) && (Serial.available() > 1)) {
+  if (manual_control && !(stepper.tick()) && (Serial.available() > 1)) {
     // Command example:
     // 0x01 0x02 0x0f 0x12 0x00
     int32_t result = 0;
     byte command = Serial.read();
-    byte argSize  = Serial.read();
-    
-    while (Serial.available() < argSize); // Waiting for data
-    
-    for (; argSize; argSize--)
-      result = result << 8 + Serial.read();
 
-    while (!Serial.available());
-    if (Serial.read()) // Checking end of command
-      return;
+    Serial.readBytes((byte*)&result, 4);
     
     switch (command) {
       case 1:
@@ -155,10 +147,7 @@ void getSmartCommand() {
   }
 }
 
-void sendData(byte dataNum, float comArg){
+void sendData(byte dataNum, float data){
   Serial.write(dataNum);
-  Serial.write(0x04);
-  for (int8_t i = 3; i >= 0; i--)
-    Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
-  Serial.write(0x00);
+  Serial.write((byte*)&data, sizeof(data));
 }

@@ -23,15 +23,12 @@ String sensorsNames[] = {"", "", "", "tds"};
 
 void sendCommandA(byte command, uint32_t comArg){
   Serial.write(command);
-  Serial.write(0x04);
-  for (int8_t i = 3; i >= 0; i--)
-    Serial.write(comArg & (0xff << (8 * i)) >> (8 * i));
-  Serial.write(0x00);
+  Serial.write((byte*)&comArg, sizeof(comArg));
 }
 
 void getServersCommand() {
   if (WiFi.status() == WL_CONNECTED && commands_timer <= millis()){
-    commands_timer = millis() + 2000;
+    commands_timer = millis() + 5000;
     digitalWrite(led, 1);
     WiFiClient client;
     HTTPClient http;
@@ -42,8 +39,6 @@ void getServersCommand() {
           deserializeJson(jsonBuffer, http.getString());
           int light0 = jsonBuffer["light"][0];
           int light1 = jsonBuffer["light"][1];
-          Serial.println(light0);
-          Serial.println(light1);
           sendCommandA(light0 > 0? 3: 4, 1);
           sendCommandA(light1 > 0? 3: 4, 2);
           if (jsonBuffer.containsKey("motors")) {
@@ -69,13 +64,13 @@ void sendSensors() {
     WiFiClient client;
     HTTPClient http;
     if (http.begin(client, "http://192.168.43.49:5000/data")) {
+      jsonBuffer.clear();
       http.addHeader("Content-Type", "application/json");
       for (int i = 0; i < NUM_SENSORS; i++) {
         float data = 0;
-        while (Serial.available() <= 1);
+        while (!Serial.available());
         uint8_t sensorNum = Serial.read();
-        uint8_t dataLen = Serial.read();
-        Serial.readBytes((byte*) &data, dataLen);
+        Serial.readBytes((byte*) &data, sizeof(data));
         jsonBuffer[sensorsNames[sensorNum-1]] = data;
       }
       
@@ -83,7 +78,7 @@ void sendSensors() {
 
       if (httpCode > 0) {
         if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-          String payload = http.getString();
+          //String payload = http.getString();
           //Serial.print(payload);
         }
       }
@@ -114,10 +109,9 @@ void setup(void) {
   Serial.println(ssid);
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());*/
-  commands_timer = millis() + 2000;
 }
 
 void loop(void) {
   getServersCommand();
-  //sendSensors();
+  sendSensors();
 }

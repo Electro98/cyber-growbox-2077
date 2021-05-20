@@ -1,7 +1,7 @@
 #include "sensors.h"
 
 OneWire oneWire(DS18B20_PIN);
-DallasTemperature sensors(&oneWire);
+DallasTemperature waterSensors(&oneWire);
 DeviceAddress waterThermometer;
 BH1750 lightMeter;
 
@@ -9,20 +9,20 @@ SoftwareSerial CO2Serial(CO2_TX, CO2_RX);
 const byte cmd[9] PROGMEM= {0xFF,0x01,0x86,0x00,0x00,0x00,0x00,0x00,0x79};  // Basic command for CO2 sensor
 
 void setupSensors(){
-    sensors.begin();
-    sensors.getAddress(waterThermometer, 0);     // For easier
-    sensors.setResolution(waterThermometer, 12); // Default resolution
+    waterSensors.begin();
+    waterSensors.getAddress(waterThermometer, 0);     // For easier
+    waterSensors.setResolution(waterThermometer, 12); // Default resolution
     lightMeter.begin();
     CO2Serial.begin(9600);
 }
 
 float getTempurature(){
-    sensors.requestTemperatures();
-    return sensors.getTempC(waterThermometer);
+    waterSensors.requestTemperatures();
+    return waterSensors.getTempC(waterThermometer);
 }
 
 void setResolutionDS18(int resolution){
-    sensors.setResolution(waterThermometer, resolution);
+    waterSensors.setResolution(waterThermometer, resolution);
 }
 
 

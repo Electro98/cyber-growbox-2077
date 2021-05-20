@@ -65,7 +65,7 @@ class SensorsAPI(MethodView):
         #
         # Но пока идёт тест...
         # Ахтунг
-        curs.execute(f"INSERT INTO sensors (date, time) VALUES (\'{data['date']}\', \'{data['time']}\')")
+        # curs.execute(f"INSERT INTO sensors (date, time) VALUES (\'{data['date']}\', \'{data['time']}\')")
         # return 'OK'
         return render_template('data.html', data=data)
 
@@ -147,5 +147,5 @@ def index():
 if __name__ == '__main__':
     # или через консоль:
     # python -m flask run
-    app.run(debug=True)
-    # app.run(host='0.0.0.0')
+    # app.run(debug=True)
+    app.run(host='0.0.0.0')
