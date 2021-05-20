@@ -3,6 +3,7 @@
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature waterSensors(&oneWire);
 DeviceAddress waterThermometer;
+Adafruit_BME680 bme(BME_CS, BME_MOSI, BME_MISO,  BME_SCK);
 BH1750 lightMeter;
 
 SoftwareSerial CO2Serial(CO2_TX, CO2_RX);
@@ -27,10 +28,10 @@ void setResolutionDS18(int resolution){
 
 
 float getTdsParametrs(){
-    int valueSensor = analogRead(TDS_PIN);
+    int valueSensor = analogRead(PINSENSOR);
     float voltageSensor = valueSensor * 5 / 1024.0;
     float tdsSensor = (133.42 * pow(voltageSensor, 3) - 255.86 * pow(voltageSensor, 2) + 857.39 * voltageSensor) * 0.5;
-    return tdsSensor; 
+    return tdsSensor;
 }
 
 uint16_t getLux(){
@@ -38,18 +39,65 @@ uint16_t getLux(){
   return lux;
 }
 
-uint8_t getPPM(){
-  CO2Serial.write(cmd, 9);
-  uint8_t response[9];
-  memset(response, 0, 9);
-  CO2Serial.readBytes(response, 9);
-  byte crc = 0;
-  for (int i = 1; i < 8; i++) crc+=response[i];
-  crc = 255 - crc;
-  crc++;
-  if ( !(response[0] == 0xFF && response[1] == 0x86 && response[8] == crc) )
-    return 0;
-  unsigned int responseHigh = (unsigned int) response[2];
-  unsigned int responseLow = (unsigned int) response[3];
-  return (256*responseHigh) + responseLow;
+float airQualityIndex(){
+  float gas_lower = 5000, gas_upper = 50000;
+  float gas_reference = 250000;
+  float humidity_reference = 40;
+  float humidity_score = 0;
+  float gas_score = 0;
+  float current_humidity = bme.readHumidity();
+
+  float getGasReference(){
+  int readings = 10;
+  for (int i = 1; i <= readings; i++){
+    gas_reference += bme.readGas();
+  }
+  gas_reference = gas_reference / readings;
+  return gas_reference;
+  }
+
+
+  if(current_humidity >= 38 && current_humidity <= 48){
+    humidity_score = 0.25*100;
+  }else{
+    if(current_humidity < 38){
+      humidity_score = 0.25 / humidity_reference * current_humidity * 100;
+    }else{
+      humidity_score = ((-0.25 / (100 - humidity_reference) * current_humidity) + 0.416666) * 100;
+    }
+  }
+
+  if(gas_reference > gas_upper){
+    gas_reference = gas_upper;
+  }
+  if(gas_reference < gas_lower){
+    gas_reference = gas_lower;
+  }
+  gas_score = (0.75/(gas_upper - gas_lower) * gas_reference - (gas_lower * (0.75 / (gas_upper - gas_lower)))) * 100;
+
+  float air_quality_score = humidity_score + gas_score;
+
+  air_quality_score = (100 - air_quality_score) * 5;
+
+  return air_quality_score;
+}
+
+void setupBME680() {
+  bme.setTemperatureOversampling(BME680_OS_8X);
+  bme.setHumidityOversampling(BME680_OS_2X);
+  bme.setPressureOversampling(BME680_OS_4X);
+  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
+  bme.setGasHeater(320, 150);
+}
+
+float airTemperature(){
+  return bme.temperature;
+}
+
+float airPressure(){
+  return bme.pressure  * 0.0075;
+}
+
+float airHumidity(){
+  return bme.humidity;
 }
