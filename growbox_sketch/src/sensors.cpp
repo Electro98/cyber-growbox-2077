@@ -17,7 +17,7 @@ void setupSensors(){
     CO2Serial.begin(9600);
 }
 
-float getTempurature(){
+float getWaterTempurature(){
     waterSensors.requestTemperatures();
     return waterSensors.getTempC(waterThermometer);
 }
@@ -39,6 +39,22 @@ uint16_t getLux(){
   return lux;
 }
 
+uint16_t getPPM(){
+  CO2Serial.write(cmd, 9);
+  uint8_t response[9];
+  memset(response, 0, 9);
+  CO2Serial.readBytes(response, 9);
+  byte crc = 0;
+  for (int i = 1; i < 8; i++) crc+=response[i];
+  crc = 255 - crc;
+  crc++;
+  if ( !(response[0] == 0xFF && response[1] == 0x86 && response[8] == crc) )
+    return 0;
+  uint8_t responseHigh = (uint8_t) response[2];
+  uint8_t responseLow = (uint8_t) response[3];
+  return (256*responseHigh) + responseLow;
+}
+
 float airQualityIndex(){
   float gas_lower = 5000, gas_upper = 50000;
   float gas_reference = 250000;
@@ -46,16 +62,6 @@ float airQualityIndex(){
   float humidity_score = 0;
   float gas_score = 0;
   float current_humidity = bme.readHumidity();
-
-  float getGasReference(){
-  int readings = 10;
-  for (int i = 1; i <= readings; i++){
-    gas_reference += bme.readGas();
-  }
-  gas_reference = gas_reference / readings;
-  return gas_reference;
-  }
-
 
   if(current_humidity >= 38 && current_humidity <= 48){
     humidity_score = 0.25*100;

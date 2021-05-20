@@ -5,9 +5,11 @@
 #define PINSENSOR A7
 #define BH1750_PIN_1 4  //Pin A4
 #define BH1750_PIN_2 5  //Pin A5
-#define BME680_SCL 13  //Pin D13
-#define BME680_SDA 11  //Pin D11
-#define BME680_SDO 12  //Pin D12
-#define BME680_CS 10  //Pin D10
+#define CO2_TX 3 //Pin D3
+#define CO2_RX 2 //Pin D2
+#define BME_CS 0    //Pin D
+#define BME_MOSI 0  //Pin D
+#define BME_MISO 0  //Pin D
+#define BME_SCK 0   //Pin D
 
 #endif

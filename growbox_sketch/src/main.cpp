@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <GyverStepper.h>
 #include <DS3231.h>
+#include "sensors.h"
 
 #define TRASLATE_STEPS_TO_MM
 #define STEPS_PER_FULL_ROTATION 200
@@ -11,8 +12,8 @@ GStepper<STEPPER2WIRE> stepper(STEPS_PER_FULL_ROTATION, 7, 6);
 
 DS3231  rtc(SDA, SCL);
 Time  t;
-unit64_t time_old;
-unit16_t time_interval = 60;
+uint64_t time_old;
+uint16_t time_interval = 60;
 
 // Relays pins array
 const byte ARRAY_RELAYS[] = {3, 4};
@@ -23,12 +24,12 @@ uint32_t day_timer = 0;
 uint32_t pump_timer = 0;
 uint8_t last_pump_hour = 0;
 
-void sendCommandE(byte command, uint32_t comArg);
+void sendData(byte dataNum, float data);
 int32_t controlMotor();
 void getSmartCommand();
 void control_daytime();
 void control_pump();
-float survey_of_sensors();
+void survey_of_sensors();
 
 void setup() {
   // Initialization of pins to work with relays
@@ -52,18 +53,18 @@ void setup() {
   time_old = rtc.getUnixTime(rtc.getTime());
 }
 
-void survey_of_sensors(unit16_t time_interval, unit64_t time_old){ 
+void survey_of_sensors(){ 
   float dataSens = 0;
   if (time_interval <= (rtc.getUnixTime(rtc.getTime()) - time_old)){
       time_old = rtc.getUnixTime(rtc.getTime());
-      dataSens = (float) getLux();
-      sendData( 0x01, dataSens);
+      //dataSens = (float) getLux();
+      //sendData( 0x01, dataSens);
       dataSens = (float) getPPM();
-      sendData( 0x02, dataSens);
-      dataSens = getTempurature();
-      sendData( 0x03, dataSens);
+      sendData( PPM_SENSOR_NUMBER, dataSens);
+      //dataSens = getWaterTempurature();
+      //sendData( 0x03, dataSens);
       dataSens = getTdsParametrs();
-      sendData( 0x04, dataSens);
+      sendData( TDS_SENSOR_NUMBER, dataSens);
   }
 }
 
