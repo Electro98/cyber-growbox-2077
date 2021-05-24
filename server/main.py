@@ -10,6 +10,7 @@ from flask.views import MethodView
 from plotly.utils import PlotlyJSONEncoder
 from plotly import graph_objs
 from functools import wraps
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -57,15 +58,22 @@ class SensorsAPI(MethodView):
     def post(self, *, curs):
         # Столбцы таблицы
         # date time light_1 temp_water tds co2
-        print(request)
         data = request.json
         print(data, file=sys.stderr)
         # По идеи тут должен быть вызов функции,
         #   которая асинхронно записывает данные в БД
         #
-        # Но пока идёт тест...
+        # Но пока идёт продуктион...
         # Ахтунг
-        # curs.execute(f"INSERT INTO sensors (date, time) VALUES (\'{data['date']}\', \'{data['time']}\')")
+        now = datetime.today()
+        collumns_info = curs.execute("PRAGMA table_info(\'sensors\')").fetchall()
+        collums_name = {collumn_info[1] for collumn_info in collumns_info}
+        corrects_info_name = collums_name.intersection(set(data.keys()))
+        data = {key: val for key, val in data.values() if key in corrects_info_name}
+        data['date'] = now.strftime("'%Y-%m-%d'")
+        data['time'] = now.strftime("'%H:%M:%S'")
+        db_request = f"INSERT INTO sensors ({', '.join(data.keys())}) VALUES ({', '.join(data.values())})"
+        curs.execute()
         # return 'OK'
         return render_template('data.html', data=data)
 
@@ -147,5 +155,5 @@ def index():
 if __name__ == '__main__':
     # или через консоль:
     # python -m flask run
-    # app.run(debug=True)
-    app.run(host='0.0.0.0')
+    app.run(debug=True)
+    # app.run(host='0.0.0.0')

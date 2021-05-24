@@ -105,13 +105,14 @@ int32_t controlMotor(int32_t distance) {
   #ifdef TRASLATE_STEPS_TO_MM
     result = distance * STEPS_PER_FULL_ROTATION / MM_IN_FULL_ROTATION;
   #endif
-  stepper.setTarget(result, RELATIVE);
+  if (manual_control)
+  	stepper.setTarget(result, RELATIVE);
   return result;
 }
 
 byte controlRelay(int8_t command) {
   byte indexRelay = abs(command) - 1; // Ignoring minus
-  if (indexRelay < sizeof(ARRAY_RELAYS)) {
+  if (manual_control && indexRelay < sizeof(ARRAY_RELAYS)) {
     if (command > 0)
       digitalWrite(ARRAY_RELAYS[indexRelay], 1);
     else
@@ -122,7 +123,7 @@ byte controlRelay(int8_t command) {
 }
 
 void getSmartCommand() {
-  if (manual_control && !(stepper.tick()) && (Serial.available() > 1)) {
+  if (!(stepper.tick()) && (Serial.available() > 1)) {
     // Command example:
     // 0x01 0x02 0x0f 0x12 0x00
     int32_t result = 0;

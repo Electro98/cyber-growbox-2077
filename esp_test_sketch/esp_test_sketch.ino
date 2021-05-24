@@ -18,7 +18,7 @@ StaticJsonDocument<capacity> jsonBuffer;
 
 uint32_t commands_timer = 0;
 
-#define NUM_SENSORS 1
+#define NUM_SENSORS 2
 String sensorsNames[] = {"", "co2", "", "tds"};
 
 void sendCommandA(byte command, uint32_t comArg){
