@@ -8,13 +8,53 @@
       <title>GrowNET is greating you!</title>
       {% endif %}
     </head>
+    <style type="text/css">
+    .sidebar {
+        position: absolute;
+        width: 10%;
+        top: 0%;
+        left: 0.5%;
+        padding: 2%;
+        border-radius: 5%;
+        background-color: #D3D3D3;
+    }
+    .content {
+        position: absolute;
+        width: 90%;
+        top: 0%;
+        left: 15%;
+    }
+    .sidebar_logo {
+        width: 80%;
+        background-color: #FDFDFD;
+        border-radius: 5%;
+        outline: 2px outset #000000;
+    }
+    .sidebar_panel {
+        width: 96%;
+    }
+    #sidebar div {
+        width: 96%;
+        border-radius: 10%;
+        margin-bottom: 5%;
+        text-align: center;
+        background-color: #FDFAFA;
+        color: #000000;
+        outline: 2px outset #000000;
+    }
+    #sidebar a {
+        text-decoration: none;
+    }
+
+	</style>
     <body>
-        <div>GrowNet: 
-          <a href="{{ url_for('index') }}">Control Panel</a>
-          <a href="{{ url_for('show_last_state') }}">Last data</a>
-          <a href="{{ url_for('graph_example') }}">Plot</a>
+        <div class="sidebar" id="sidebar">
+          <a href="{{ url_for('index') }}" ><img src="bulb_with_plant_logo.png" class="sidebar_logo"></a>
+        <h2 class="sidebar_panel">GrowNet:</h2> 
+          <a href="{{ url_for('index') }}"><div>Control Panel</div></a>
+          <a href="{{ url_for('show_last_state') }}"><div>Last data</div></a>
+          <a href="{{ url_for('graph_example') }}"><div>Plot</div></a>
         </div>
-        <hr>
-        {% block content %}{% endblock %}
+        <div class="content">{% block content %}{% endblock %}</div> 
     </body>
 </html>
