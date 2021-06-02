@@ -4,3 +4,5 @@
 
 # For tests sketch
 */.pio
+# ignoring PlatformIO trash
+growbox_sketch/.gitignore

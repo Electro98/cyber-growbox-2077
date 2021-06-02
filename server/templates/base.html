@@ -11,36 +11,39 @@
     <style type="text/css">
     .sidebar {
         position: absolute;
-        width: 10%;
-        top: 0%;
+        width: 12%;
+        top: 0.5%;
         left: 0.5%;
-        padding: 2%;
+        padding: 1%;
         border-radius: 5%;
         background-color: #D3D3D3;
     }
     .content {
         position: absolute;
-        width: 90%;
-        top: 0%;
+        width: 74.5%;
+        top: 0.5%;
         left: 15%;
     }
     .sidebar_logo {
-        width: 80%;
+        width: 10%;
         background-color: #FDFDFD;
         border-radius: 5%;
-        outline: 2px outset #000000;
     }
     .sidebar_panel {
-        width: 96%;
+        width: 47.5%;
+        display: inline-block;
     }
-    #sidebar div {
+    #sidebar .sidebar_div {
         width: 96%;
         border-radius: 10%;
         margin-bottom: 5%;
         text-align: center;
         background-color: #FDFAFA;
         color: #000000;
-        outline: 2px outset #000000;
+        outline: 3px outset #000000;
+    }
+    .hack {
+        padding-top: 100%;
     }
     #sidebar a {
         text-decoration: none;
@@ -49,11 +52,25 @@
 	</style>
     <body>
         <div class="sidebar" id="sidebar">
-          <a href="{{ url_for('index') }}" ><img src="bulb_with_plant_logo.png" class="sidebar_logo"></a>
-        <h2 class="sidebar_panel">GrowNet:</h2> 
-          <a href="{{ url_for('index') }}"><div>Control Panel</div></a>
-          <a href="{{ url_for('show_last_state') }}"><div>Last data</div></a>
-          <a href="{{ url_for('graph_example') }}"><div>Plot</div></a>
+            <div class="sidebar_div" class="sidebar_div" style="outline: 2px outset #000000;border-radius: 0% 20% 0% 20%;">
+                <a href="{{ url_for('index') }}" style="text-decoration: none; display: block;">
+                    <h1>
+                        <img src="/static/bulb_with_plant_logo.png" class="sidebar_logo" style="display: inline-block;">
+                        GrowNet:
+                    </h1>
+                </a>
+                 
+            </div>
+        
+            <a class="sidebar_panel" href="{{ url_for('index') }}">
+                <img class="sidebar_div" alt="Control Panel" src="/static/control-panel.svg">
+            </a>
+            <a class="sidebar_panel" href="{{ url_for('graph') }}?plot=tds">
+                <img class="sidebar_div" alt="Last data" src="/static/water.svg">
+            </a>
+            <a class="sidebar_panel" href="{{ url_for('graph') }}?plot=co2">
+                <img class="sidebar_div" alt="Plot" src="/static/co2.svg">
+            </a>
         </div>
         <div class="content">{% block content %}{% endblock %}</div> 
     </body>

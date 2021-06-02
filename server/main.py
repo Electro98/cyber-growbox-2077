@@ -7,14 +7,14 @@ import json
 from flask import Flask, request, render_template
 from flask.json import jsonify
 from flask.views import MethodView
-from plotly.utils import PlotlyJSONEncoder
+from plotly.io import to_json
 from plotly import graph_objs
 from functools import wraps
 from datetime import datetime
 
 app = Flask(__name__)
 
-light_state = [{'name': lamp, 'val': 0} for lamp in ('Управление', 'Лампы', 'Насос')]
+light_state = [{'name': lamp, 'val': 0} for lamp in ('Вкл.\nПульт', 'Лампы', 'Насос')]
 motors_state = 0
 
 
@@ -69,11 +69,11 @@ class SensorsAPI(MethodView):
         collumns_info = curs.execute("PRAGMA table_info(\'sensors\')").fetchall()
         collums_name = {collumn_info[1] for collumn_info in collumns_info}
         corrects_info_name = collums_name.intersection(set(data.keys()))
-        data = {key: val for key, val in data.values() if key in corrects_info_name}
+        data = {key: val for key, val in data.items() if key in corrects_info_name}
         data['date'] = now.strftime("'%Y-%m-%d'")
         data['time'] = now.strftime("'%H:%M:%S'")
-        db_request = f"INSERT INTO sensors ({', '.join(data.keys())}) VALUES ({', '.join(data.values())})"
-        curs.execute()
+        db_request = f"INSERT INTO sensors ({', '.join(data.keys())}) VALUES ({', '.join(map(str, data.values()))})"
+        curs.execute(db_request)
         # return 'OK'
         return render_template('data.html', data=data)
 
@@ -131,19 +131,21 @@ def show_last_state(*, curs):
 
 @app.route('/graph')
 @work_with_base
-def graph_example(*, curs):
-    data = curs.execute("SELECT * FROM sensors").fetchall()
-    df = pandas.DataFrame(data, columns=['date', 'time', 'light_1', 'temp_water', 'tds', 'co2'])
-    for column in ('time', 'light_1', 'temp_water', 'tds'):
-        del df[column]
-    graph = [
-        graph_objs.Scatter(
-            x=df['date'],
-            y=df['co2'],
-        )
-    ]
-    graphJSON = json.dumps(graph, cls=PlotlyJSONEncoder)
-    return render_template('graph.html', plot=graphJSON)
+def graph(*, curs):
+    collumns_info = curs.execute("PRAGMA table_info(\'sensors\')").fetchall()
+    collums_name = [collumn_info[1] for collumn_info in collumns_info[2:]]
+    data_collumn = 'co2'
+    if request.args.get('plot') and request.args['plot'] in collums_name:
+        data_collumn = request.args['plot']
+    data = curs.execute(f"SELECT date, time, {data_collumn} FROM sensors").fetchall()
+    df = pandas.DataFrame(data, columns=['date', 'time', data_collumn])
+    df['date'] = pandas.to_datetime(df['date'] + ' ' + df['time'])
+    graph = graph_objs.Figure()
+    graph.add_trace(graph_objs.Scatter(x=df['date'], y=df[data_collumn]))
+    graph.update_layout(title=f"График {data_collumn}",
+                        xaxis_title="Дата",
+                        yaxis_title=data_collumn,)
+    return render_template('graph.html', plot=to_json(graph))
 
 
 @app.route('/')

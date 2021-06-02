@@ -37,6 +37,7 @@ void setup() {
     pinMode(ARRAY_RELAYS[i], OUTPUT);
 
   Serial.begin(115200);
+  setupSensors();
   // режим следования к целевoй позиции
   stepper.setRunMode(FOLLOW_POS);
   // установка макс. скорости в шагах/сек
@@ -105,8 +106,7 @@ int32_t controlMotor(int32_t distance) {
   #ifdef TRASLATE_STEPS_TO_MM
     result = distance * STEPS_PER_FULL_ROTATION / MM_IN_FULL_ROTATION;
   #endif
-  if (manual_control)
-  	stepper.setTarget(result, RELATIVE);
+  stepper.setTarget(result, RELATIVE);
   return result;
 }
 

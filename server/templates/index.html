@@ -20,7 +20,7 @@
 	  if (status == 200) {
 	  	var json = request.response;
 	  	for (key in json)
-	  		document.getElementById(key).setAttribute("fill", parseInt(json[key])? "yellow": "black");
+	  		document.getElementById(key).setAttribute("class", parseInt(json[key])? "green": "red");
 	  }
 	}
   }
@@ -38,9 +38,10 @@
 	request.send(JSON.stringify(json));
   }
 
-  function send_relay(id_bulb, type) {
+  function send_relay(id_bulb) {
     request = new XMLHttpRequest();
-	var json = {command: (type? 'A': 'D'), arg: id_bulb};
+    var logic = document.getElementById(key).getAttribute("class") == "red";
+	var json = {command: (logic? 'A': 'D'), arg: id_bulb};
 	request.open("POST", "{{ request.url_root[:-1] }}{{ url_for('add_commands') }}", true);
 	request.setRequestHeader("Content-Type", "application/json");
 	request.onreadystatechange = reqReadyStateChange;
@@ -59,49 +60,59 @@
 window.onload = set_update;
 </script>
 <style type="text/css">
-.inline {
-	display: inline-block;
-	vertical-align: middle;
-}
-.main-inline {
-	display: inline-block;
-	vertical-align: middle;
-	border: 1px solid black;
-	padding: 3px;
-}
+    .inline {
+    	display: inline-block;
+    	vertical-align: middle;
+    }
+    .main-inline {
+    	padding: 3px;
+        margin-bottom: 1%;
+    }
+    #div-buttons input {
+        width: 7vw;
+        height: 7vw;
+        border-radius: 50%;
+        text-align: center;
+        font-size: 2.8vh;
+        font-weight: bold;
+        margin: 0.5%;
+        display: inline-block;
+        vertical-align: middle;
+    }
+    .green {
+        background-color: #79E844;
+        color: #1f8e00;
+        outline: 3px outset #4CBB17;
+    }
+    .red {
+        background-color: #ff3d19;
+        color: #960018;
+        outline: 3px outset #FF2400;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<div class="main-inline" border='1'>
-	<p>Cостояние ламп:</p>
+<div class="main-inline" id="div-buttons" style="width: 30%;padding: 1% 0% 1% 0.2%;border-radius: 5%;background-color: #D3D3D3;">
 	{% if data %}
 	  {% for num, bulb in data %}
-	  <hr>
-	  <div>
-		<svg class="inline" width="60" height="60">
-			<circle id="bulb{{ num }}" cx="30" cy="30" r="25" fill="{{ 'yellow' if bulb['val'] else 'black' }}" />
-		</svg>
-		<div class="inline">{{ bulb['name'] }}</div>
-		<input type="button" class="inline" value="Вкл" onclick="send_relay({{ num }}, 1)"/>
-	    <input type="button" class="inline" value="Выкл" onclick="send_relay({{ num }}, 0)"/>
-	  </div>
+      <input type="button" class="red" value="{{ bulb['name'] }}" id="bulb{{ num }}" onclick="send_relay({{ num }})"/>
 	  {% endfor %}
 	{% else %}
 	  <h2>Ламп нет</h2>
 	{% endif %}
-	</svg>
 </div>
 
-<div class="main-inline" border='1'>
+<div class="main-inline inline" style="border-radius: 5%;background-color: #D3D3D3;">
 	<p>Управление платформой:</p>
-	<input id="platform" type="number" size="4" name="arg" min="1" max="150" value="10">
+	<input id="platform" type="number" size="2" name="arg" min="1" max="150" value="10"/>
+    <span style="font-size: 0.8em;">mm</span>
 	<input type="button" value="Вверх!" onclick="send_platform('R')"/>
 	<input type="button" value="Ввниз!" onclick="send_platform('L')"/>
 </div>
 
-<div class="main-inline" border='1'>
+<div class="main-inline inline">
 	<div id="result"></div>
 </div>
 
