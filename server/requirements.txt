@@ -1,6 +1,7 @@
-requests  # для отправки POST запросов
-flask
-plotly
-pandas  # для обработки данных
-
-pylint    # venv
+flask		# основной фреймворк
+functools 	# для декоратора функции в фласке
+requests  	# для отправки POST запросов
+plotly		# для постройки красивых графиков
+pandas  	# для обработки полученных данных
+influxdb	# клиент для базы данных
+pylint    	# venv
