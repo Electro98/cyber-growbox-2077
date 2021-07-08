@@ -4,7 +4,7 @@
 #include <setup.h>
 #include <BH1750.h>
 #include <Wire.h>
-#include "Adafruit_BME680.h"
+#include <Adafruit_BME680.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <SoftwareSerial.h>
@@ -17,7 +17,6 @@
 #define AIR_TEMPERATURE_SENSOR_NUMBER 0x06
 #define AIR_PRESSURE_SENSOR_NUMBER 0x07
 #define AIR_HUMIDITY_SENSOR_NUMBER 0x08
-// #define _SENSOR_NUMBER 0x0
 
 void setupSensors();
 float getWaterTempurature();
