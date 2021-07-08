@@ -1,11 +1,8 @@
-import sys
-import requests
 import pandas
-import json
 
 from flask import Flask, request, render_template
 from flask.json import jsonify
-from flask_socketio import SocketIO, send, emit
+from flask_socketio import SocketIO, emit
 from influxdb import InfluxDBClient
 from plotly.io import to_json
 from plotly import graph_objs
@@ -46,10 +43,10 @@ def post(self, client=None):
         print('Error with connection to DB!')
         return 'Error with DB.'
     data = request.json
-    print(data, file=sys.stderr)
     now = int(datetime.today().timestamp() * 10**9)
     for key, value in data.items():
         client.write(f'{key} value={value} {now}')
+    # Передача новых данных всем текущим клиентам
     emit('update', (datetime.today().strftime('%Y-%m-%d %H:%M:%S'), data), namespace='/real-time-graph', broadcast=True)
     return 'Ok.'
 
@@ -63,7 +60,7 @@ def add_commands():
     if data['command'] in ('A', 'D'):
         light_state[int(data['arg'])]['val'] = int(data['command'] == 'A')
     elif data['command'] in ('R', 'L'):
-        global motors_state  # Осуждаю, честно, дайте идей, как это поправить
+        global motors_state
         motors_state += int(data['arg'])
     return 'Success!'
 
@@ -90,10 +87,9 @@ def show_last_state(client=None):
     if not client:
         print('Error with connection to DB!')
         return 'Error with DB.'
-
-    meas_names = list(point['name'] for point in client.query('SHOW measurements').get_points())
-    data = client.query(f'SELECT last(value) from {", ".join(meas_names)}')
-    data = {meas_names[_id]: point["last"] for _id, point in enumerate(data.get_points())}
+    measurements = list(point['name'] for point in client.query('SHOW measurements').get_points())
+    data = client.query(f'SELECT last(value) from {", ".join(measurements)}')
+    data = {measurements[_id]: point["last"] for _id, point in enumerate(data.get_points())}
     return render_template('data.html', data=data)
 
 
@@ -104,9 +100,9 @@ def graph(client=None):
         print('Error with connection to DB!')
         return 'Error with DB.'
 
-    meas_names = list(point['name'] for point in client.query('SHOW measurements').get_points())
-    measurement = meas_names[0]
-    if request.args.get('plot') and request.args['plot'] in meas_names:
+    measurements = list(point['name'] for point in client.query('SHOW measurements').get_points())
+    measurement = measurements[0]
+    if request.args.get('plot') in measurements:
         measurement = request.args['plot']
     data = client.query(f"SELECT value FROM {measurement}")
     df = pandas.DataFrame(list(data.get_points()))
@@ -123,7 +119,6 @@ def graph(client=None):
 @socketio.on('connect', namespace='/real-time-graph')
 def handle_message():
     print('client connected')
-    emit('my response', {'data': 'Connected'})
 
 
 @socketio.on('disconnect', namespace='/real-time-graph')
