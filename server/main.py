@@ -5,7 +5,7 @@ import json
 
 from flask import Flask, request, render_template
 from flask.json import jsonify
-from flask.views import MethodView
+from flask_socketio import SocketIO, send, emit
 from influxdb import InfluxDBClient
 from plotly.io import to_json
 from plotly import graph_objs
@@ -13,6 +13,7 @@ from functools import wraps
 from datetime import datetime
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 light_state = [{'name': lamp, 'val': 0} for lamp in ('Вкл.\nПульт', 'Лампы', 'Насос')]
 motors_state = 0
@@ -49,6 +50,7 @@ def post(self, client=None):
     now = int(datetime.today().timestamp() * 10**9)
     for key, value in data.items():
         client.write(f'{key} value={value} {now}')
+    emit('update', (datetime.today().strftime('%Y-%m-%d %H:%M:%S'), data), namespace='/real-time-graph', broadcast=True)
     return 'Ok.'
 
 
@@ -115,7 +117,18 @@ def graph(client=None):
     graph.update_layout(title=f"График {measurement}",
                         xaxis_title="Дата",
                         yaxis_title=measurement,)
-    return render_template('graph.html', plot=to_json(graph))
+    return render_template('graph.html', plot=to_json(graph), filter=measurement)
+
+
+@socketio.on('connect', namespace='/real-time-graph')
+def handle_message():
+    print('client connected')
+    emit('my response', {'data': 'Connected'})
+
+
+@socketio.on('disconnect', namespace='/real-time-graph')
+def handle_json():
+    print('client disconnected')
 
 
 @app.route('/')
@@ -125,7 +138,5 @@ def index():
 
 
 if __name__ == '__main__':
-    # или через консоль:
-    # python -m flask run
-    app.run(debug=True)
-    # app.run(host='0.0.0.0')
+    socketio.run(app, debug=True)
+    # socketio.run(app, host='0.0.0.0')
