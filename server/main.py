@@ -50,7 +50,7 @@ def post(self, client=None):
     now = int(datetime.today().timestamp() * 10**9)
     for key, value in data.items():
         client.write(f'{key} value={value} {now}')
-    # emit('update', (datetime.today().strftime('%Y-%m-%d %H:%M:%S'), 2), namespace='/real-time-graph', broadcast=True)
+    emit('update', (datetime.today().strftime('%Y-%m-%d %H:%M:%S'), data), namespace='/real-time-graph', broadcast=True)
     return 'Ok.'
 
 
@@ -117,7 +117,7 @@ def graph(client=None):
     graph.update_layout(title=f"График {measurement}",
                         xaxis_title="Дата",
                         yaxis_title=measurement,)
-    return render_template('graph.html', plot=to_json(graph))
+    return render_template('graph.html', plot=to_json(graph), filter=measurement)
 
 
 @socketio.on('connect', namespace='/real-time-graph')

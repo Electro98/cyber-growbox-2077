@@ -7,9 +7,9 @@
   <script type="text/javascript" charset="utf-8">
   var socket = io('/real-time-graph');
   socket.on('update', function(date, data) {
-    console.log(data, date);
+    console.log(date, data["{{  filter  }}"]);
     Plotly.extendTraces('bargraph', {
-        y: [[data]], 
+        y: [[data["{{  filter  }}"]]], 
         x: [[date]]
     }, [0])
     });
