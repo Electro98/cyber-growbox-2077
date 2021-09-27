@@ -1,9 +1,11 @@
 #include "sensors.h"
 
+//SoftWire MasterWire = SoftWire();
+
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature waterSensors(&oneWire);
 DeviceAddress waterThermometer;
-Adafruit_BME680 bme(BME_CS, BME_MOSI, BME_MISO,  BME_SCK);
+Adafruit_BME680 bme(0, 0, 0, 0);
 BH1750 lightMeter;
 
 SoftwareSerial CO2Serial(CO2_TX, CO2_RX);

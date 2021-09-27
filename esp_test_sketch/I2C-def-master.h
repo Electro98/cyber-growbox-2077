@@ -1,6 +1,6 @@
 #ifndef I2C_DEF_MASTER
 #define I2C_DEF_MASTER
-#import <Wire.h>
+#include <Wire.h>
 
 // По сути, можно сильно не упрощать разработку
 //     и просто прописать адреса и команды.

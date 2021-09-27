@@ -7,9 +7,10 @@
 #define BH1750_PIN_2 5  //Pin A5
 #define CO2_TX A6       //Pin A6
 #define CO2_RX 2        //Pin D2
-#define BME_CS 0        //Pin D
-#define BME_MOSI 0      //Pin D
-#define BME_MISO 0      //Pin D
-#define BME_SCK 0       //Pin D
+// about port mapping https://www.arduino.cc/en/Reference/PortManipulation
+#define SCL_PIN 2  // D2
+#define SCL_PORT PORTD
+#define SDA_PIN 3  // D3
+#define SDA_PORT PORTD
 
 #endif
