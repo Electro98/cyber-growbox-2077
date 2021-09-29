@@ -14,7 +14,7 @@ GStepper<STEPPER2WIRE> stepper(STEPS_PER_FULL_ROTATION, 7, 6);
 uint8_t I2C_REG[12];
 
 // Массив с контактами всех реле
-const uint8_t ARRAY_RELAYS[] = {3, 4};
+const uint8_t ARRAY_RELAYS[] = {6, 7, 8};
 
 uint32_t sensors_timer = 0;
 

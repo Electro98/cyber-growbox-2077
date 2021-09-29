@@ -19,7 +19,7 @@ typedef struct
 
 volatile info_slave i2c_info_slave;
 
-void I2C_func_ON_DATA(uint8_t num)
+void I2C_func_ON_DATA(int num)
 {
     i2c_info_slave.index_REG = Wire.read();
     for (uint8_t i = 1; i < num; i++)
