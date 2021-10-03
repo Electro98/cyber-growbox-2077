@@ -2,13 +2,14 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
-#include <DS3231.h>
 #include "I2C-def-master.h"
 
 #ifndef STASSID
 #define STASSID "GrowNET"
-#define STAPSK  "thereisnospoon"
+#define STAPSK  "11111111"
 #endif
+
+#define IP_SERVER "http://192.168.1.38:5000/"
 
 const char* ssid = STASSID;
 const char* password = STAPSK;
@@ -19,8 +20,8 @@ const uint32_t capacity = JSON_OBJECT_SIZE(5) + JSON_ARRAY_SIZE(2)+20;
 StaticJsonDocument<capacity> jsonBuffer;
 
 uint32_t commands_timer = 0;
+uint32_t sensors_timer = 0;
 
-DS3231  rtc(SDA, SCL);
 uint64_t time_old      =  0;
 uint16_t time_interval = 60;
 
@@ -32,7 +33,7 @@ void getServersCommand()
     digitalWrite(led, 1);
     WiFiClient client;
     HTTPClient http;
-    if (http.begin(client, "http://192.168.43.49:5000/get_command"))
+    if (http.begin(client, IP_SERVER "get_command"))
     {
       int httpCode = http.GET();
       if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
@@ -62,13 +63,14 @@ void getServersCommand()
 
 void sendSensors()
 {
-  if (WiFi.status() == WL_CONNECTED && time_interval <= (rtc.getUnixTime(rtc.getTime()) - time_old))
+  if (WiFi.status() == WL_CONNECTED && sensors_timer <= millis())
   {
     digitalWrite(led, 1);
     WiFiClient client;
     HTTPClient http;
-    if (http.begin(client, "http://192.168.43.49:5000/data"))
+    if (http.begin(client, IP_SERVER "data"))
     {
+      sensors_timer = millis() + 2000;
       jsonBuffer.clear();
       http.addHeader("Content-Type", "application/json");
 
@@ -78,8 +80,7 @@ void sendSensors()
 
       int httpCode = http.POST(jsonBuffer.as<String>());
 
-      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY)
-        time_old = rtc.getUnixTime(rtc.getTime());
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY){}
 
       http.end();
       jsonBuffer.clear();
@@ -90,6 +91,7 @@ void sendSensors()
 
 void setup()
 {
+  //Serial.begin(115200);
   pinMode(led, OUTPUT);
   digitalWrite(led, 0);
 
@@ -97,10 +99,17 @@ void setup()
   WiFi.begin(ssid, password);
 
   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    //Serial.print(".");
+  }
 
-  rtc.begin();
-  time_old = rtc.getUnixTime(rtc.getTime());
+  Wire.begin(2, 0);
+
+  /*Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());*/
 }
 
 void loop()

@@ -29,7 +29,7 @@ void setup()
     pinMode(ARRAY_RELAYS[i], OUTPUT);
 
   memset(I2C_REG, 0, sizeof(I2C_REG));
-
+  begin_slave(I2C_REG);
   setupSensors();
 
   stepper.setRunMode(FOLLOW_POS);
@@ -72,7 +72,7 @@ void controlRelay()
 {
   for (uint8_t i = 0; i < sizeof(ARRAY_RELAYS); i++)
   {
-    if (I2C_REG[3] & (0x80 >> i))
+    if (I2C_REG[RELAY_REG] & (0x80 >> i))
       digitalWrite(ARRAY_RELAYS[i], 1);
     else
       digitalWrite(ARRAY_RELAYS[i], 0);

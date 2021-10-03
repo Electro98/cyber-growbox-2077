@@ -38,14 +38,14 @@ def add_cors_headers(response):
 
 @app.route('/data', methods=['POST'])
 @work_with_base
-def post(self, client=None):
+def post(client=None):
     if not client:
         print('Error with connection to DB!')
         return 'Error with DB.'
     data = request.json
     now = int(datetime.today().timestamp() * 10**9)
-    for key, value in data.items():
-        client.write(f'{key} value={value} {now}')
+    points = [f'{k} value={v} {now}' for k, v in data.items() if v is not None]
+    client.write(points, {'db': 'test'}, protocol='line')
     # Передача новых данных всем текущим клиентам
     emit('update', (datetime.today().strftime('%Y-%m-%d %H:%M:%S'), data), namespace='/real-time-graph', broadcast=True)
     return 'Ok.'
@@ -133,5 +133,5 @@ def index():
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
-    # socketio.run(app, host='0.0.0.0')
+    # socketio.run(app, debug=True)
+    socketio.run(app, host='0.0.0.0')
